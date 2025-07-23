@@ -64,7 +64,7 @@ export class ProtocolHelper {
 		try {
 			switch (message.action) {
 				case EAction.Connect:
-					ProtocolHelper.connectToServer(gameServer, clientSocket, message);
+					ProtocolHelper.connectToServer(gameServer, clientSocket, message, secretKey);
 					break;
 				case EAction.GetUsers:
 					ProtocolHelper.sendUserList(gameServer, clientSocket);

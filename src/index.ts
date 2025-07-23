@@ -37,12 +37,13 @@ export default {
 		let id = env.LOBBY_DURABLE_OBJECT.idFromName('foo');
 		let stub = env.LOBBY_DURABLE_OBJECT.get(id);
 
-		return stub.fetch(request, env);
+		return stub.fetch(request);
 	},
 } satisfies ExportedHandler<Env>;
 
 // Durable Object
 export class LobbyDurableObject extends DurableObject {
+	secretKey: string;
 	currentlyConnectedWebSockets: number;
 	gameServer: GameServerHandler;
 
@@ -55,9 +56,10 @@ export class LobbyDurableObject extends DurableObject {
 		super(ctx, env);
 		this.gameServer = new GameServerHandler();
 		this.currentlyConnectedWebSockets = 0;
+		this.secretKey = env.SECRET_KEY;
 	}
 
-	async fetch(request: Request, env: Env): Promise<Response> {
+	async fetch(request: Request): Promise<Response> {
 		// Creates two ends of a WebSocket connection.
 		const webSocketPair = new WebSocketPair();
 
@@ -82,7 +84,7 @@ export class LobbyDurableObject extends DurableObject {
 			// server.send(`[Durable Object] currentlyConnectedWebSockets: ${this.currentlyConnectedWebSockets}`);
 			const decodeMessage = new TextDecoder().decode(event.data as any);
 			const parsedMessage: Message = Message.fromString(decodeMessage.toString());
-			ProtocolHelper.parseReceivingMessage(this.gameServer, clientSocket, parsedMessage, env.SECRET_KEY);
+			ProtocolHelper.parseReceivingMessage(this.gameServer, clientSocket, parsedMessage, this.secretKey);
 		});
 
 		// // If the client closes the connection, the runtime will close the connection too.
