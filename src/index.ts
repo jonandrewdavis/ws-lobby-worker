@@ -91,8 +91,8 @@ export class LobbyDurableObject extends DurableObject {
 			// this.currentlyConnectedWebSockets -= 1;
 			this.gameServer.removeClient(clientSocket.id);
 			LoggerHelper.logInfo(`Connection closed for ${clientSocket.id}`);
-			client.close();
-			// server.close();
+			// client.close();
+			server.close();
 		});
 
 		// TODO: Not sure who needs to close here
