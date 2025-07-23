@@ -55,7 +55,12 @@ export class ProtocolHelper {
 		}
 	};
 
-	public static parseReceivingMessage = (gameServer: GameServerHandler, clientSocket: ClientSocket, message: Message) => {
+	public static parseReceivingMessage = (
+		gameServer: GameServerHandler,
+		clientSocket: ClientSocket,
+		message: Message,
+		secretKey: string
+	) => {
 		try {
 			switch (message.action) {
 				case EAction.Connect:
@@ -101,10 +106,10 @@ export class ProtocolHelper {
 		}
 	};
 
-	private static connectToServer = (gameServer: GameServerHandler, clientSocket: ClientSocket, message: Message) => {
+	private static connectToServer = (gameServer: GameServerHandler, clientSocket: ClientSocket, message: Message, secretKey: string) => {
 		try {
 			LoggerHelper.logInfo('Connection attempt...');
-			if (message.payload.secretKey === Constants.SecretKey) {
+			if (message.payload.secretKey === secretKey) {
 				clearTimeout(clientSocket.logoutTimeout);
 				clientSocket.username = message.payload.username;
 				LoggerHelper.logInfo(`Connection confirmed for ${clientSocket.id}`);

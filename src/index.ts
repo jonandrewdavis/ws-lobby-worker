@@ -11,6 +11,7 @@ const CONFIG_PORT = 80;
 
 export interface Env {
 	LOBBY_DURABLE_OBJECT: DurableObjectNamespace<LobbyDurableObject>;
+	SECRET_KEY: string;
 }
 
 // Formatted like a Godot Peer (int)
@@ -36,7 +37,7 @@ export default {
 		let id = env.LOBBY_DURABLE_OBJECT.idFromName('foo');
 		let stub = env.LOBBY_DURABLE_OBJECT.get(id);
 
-		return stub.fetch(request);
+		return stub.fetch(request, env);
 	},
 } satisfies ExportedHandler<Env>;
 
@@ -56,7 +57,7 @@ export class LobbyDurableObject extends DurableObject {
 		this.currentlyConnectedWebSockets = 0;
 	}
 
-	async fetch(request: Request): Promise<Response> {
+	async fetch(request: Request, env: Env): Promise<Response> {
 		// Creates two ends of a WebSocket connection.
 		const webSocketPair = new WebSocketPair();
 
@@ -81,7 +82,7 @@ export class LobbyDurableObject extends DurableObject {
 			// server.send(`[Durable Object] currentlyConnectedWebSockets: ${this.currentlyConnectedWebSockets}`);
 			const decodeMessage = new TextDecoder().decode(event.data as any);
 			const parsedMessage: Message = Message.fromString(decodeMessage.toString());
-			ProtocolHelper.parseReceivingMessage(this.gameServer, clientSocket, parsedMessage);
+			ProtocolHelper.parseReceivingMessage(this.gameServer, clientSocket, parsedMessage, env.SECRET_KEY);
 		});
 
 		// // If the client closes the connection, the runtime will close the connection too.
