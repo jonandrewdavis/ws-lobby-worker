@@ -4,7 +4,6 @@ import { Lobby } from '../models/lobby';
 import { Message } from '../models/message';
 
 import { GameServerHandler } from './game-server-handler';
-import { Constants } from '../base/constants';
 import { LoggerHelper } from '../helpers/logger-helper';
 
 export class ProtocolHelper {
@@ -116,7 +115,6 @@ export class ProtocolHelper {
 
 				// Send response
 				const connectMessage: Message = new Message(EAction.Connect, {
-					success: true,
 					webId: clientSocket.id,
 				});
 				clientSocket.socket.send(connectMessage.toString());
@@ -139,7 +137,6 @@ export class ProtocolHelper {
 	public static sendUserList = (gameServer: GameServerHandler, clientSocket: ClientSocket) => {
 		try {
 			const userListMessage: Message = new Message(EAction.GetUsers, {
-				success: true,
 				users: gameServer.connectedClients.map((el) => {
 					return {
 						username: el.username,
@@ -158,7 +155,6 @@ export class ProtocolHelper {
 	public static sendLobbyList = (gameServer: GameServerHandler, clientSocket: ClientSocket) => {
 		try {
 			const lobbyListMessage: Message = new Message(EAction.GetLobbies, {
-				success: true,
 				lobbies: gameServer.getLobbies(),
 			});
 			clientSocket.socket.send(lobbyListMessage.toString());
@@ -185,19 +181,18 @@ export class ProtocolHelper {
 		try {
 			if (gameServer.getLobbyByPlayerId(clientSocket.id)) {
 				LoggerHelper.logWarn(`Client ${clientSocket.id} is requesting a new lobby while inside a lobby.`);
-				const invalidLobbyMessage = new Message(EAction.CreateLobby, {
-					success: false,
-				});
-				clientSocket.socket.send(invalidLobbyMessage.toString());
+				// const invalidLobbyMessage = new Message(EAction.CreateLobby, {
+				// 	success: false,
+				// });
+				// clientSocket.socket.send(invalidLobbyMessage.toString());
+
 				return false;
 			} else {
 				LoggerHelper.logInfo(`Client ${clientSocket.id} created a new lobby.`);
 				const newLobby = gameServer.createLobby();
 				newLobby.addPlayer(clientSocket);
 
-				const createLobbySuccessMessage = new Message(EAction.CreateLobby, {
-					success: true,
-				});
+				const createLobbySuccessMessage = new Message(EAction.CreateLobby, {});
 				clientSocket.socket.send(createLobbySuccessMessage.toString());
 				// Alert all clients the changes to the lobbies
 				gameServer.connectedClients.forEach((el) => {
@@ -215,9 +210,7 @@ export class ProtocolHelper {
 			if (!!lobby) {
 				lobby.removePlayer(clientSocket.id);
 
-				const createLobbySuccessMessage = new Message(EAction.LeaveLobby, {
-					success: true,
-				});
+				const createLobbySuccessMessage = new Message(EAction.LeaveLobby, {});
 				clientSocket.socket.send(createLobbySuccessMessage.toString());
 				// If the lobby is empty, erase it
 				if (lobby.players.length === 0) {
@@ -245,7 +238,6 @@ export class ProtocolHelper {
 			if (!!lobbyToJoin) {
 				if (lobbyToJoin.addPlayer(clientSocket)) {
 					const joinLobbySuccessMessage = new Message(EAction.JoinLobby, {
-						success: true,
 						lobbyId: lobbyToJoin.id,
 					});
 					clientSocket.socket.send(joinLobbySuccessMessage.toString());
@@ -266,10 +258,10 @@ export class ProtocolHelper {
 					// }
 				}
 			} else {
-				const joinLobbyFailureMessage = new Message(EAction.JoinLobby, {
-					success: false,
-				});
-				clientSocket.socket.send(joinLobbyFailureMessage.toString());
+				// const joinLobbyFailureMessage = new Message(EAction.JoinLobby, {
+				// 	success: false,
+				// });
+				// clientSocket.socket.send(joinLobbyFailureMessage.toString());
 			}
 		} catch (err: any) {
 			LoggerHelper.logError(`[ProtocolHelper.joinExistingLobby()] An error had occurred while parsing a message: ${err}`);
@@ -316,10 +308,10 @@ export class ProtocolHelper {
 					}, 1000);
 				}
 			} else {
-				const startGameFailureMessage = new Message(EAction.GameStarted, {
-					success: false,
-				});
-				clientSocket.socket.send(startGameFailureMessage.toString());
+				// const startGameFailureMessage = new Message(EAction.GameStarted, {
+				// 	success: false,
+				// });
+				// clientSocket.socket.send(startGameFailureMessage.toString());
 			}
 		} catch (err: any) {
 			LoggerHelper.logError(`[ProtocolHelper.startGameForLobby()] An error had occurred while parsing a message: ${err}`);
@@ -384,8 +376,10 @@ export class ProtocolHelper {
 	 * @param gameServer
 	 * @param clientSocket
 	 */
-	private static processHeartbeat = (gameServer, clientSocket) => {
+	private static processHeartbeat = (gameServer: GameServerHandler, clientSocket: ClientSocket) => {
 		try {
+			const heartBeatMessage: Message = new Message(EAction.Heartbeat, {});
+			clientSocket.socket.send(heartBeatMessage.toString());
 		} catch (err: any) {
 			LoggerHelper.logError(`[ProtocolHelper.processHeartbeat()] An error had occurred while parsing a message: ${err}`);
 		}
@@ -401,11 +395,11 @@ export class ProtocolHelper {
 		try {
 			const lobby: Lobby = gameServer.getLobbyByPlayerId(clientSocket.id);
 			if (!!lobby) {
-				const lobbyMessage = new Message(EAction.MessageToLobby, message.payload);
+				const lobbyMessage = new Message(EAction.MessageToLobby, { username: clientSocket.username, ...message.payload });
 				lobby.players.forEach((el) => {
-					if (el !== clientSocket) {
-						el.socket.send(lobbyMessage.toString());
-					}
+					// if (el !== clientSocket) {
+					el.socket.send(lobbyMessage.toString());
+					// }
 				});
 			}
 		} catch (err: any) {

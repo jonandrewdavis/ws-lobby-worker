@@ -16,7 +16,6 @@ export interface Env {
 
 // Formatted like a Godot Peer (int)
 function userId() {
-	console.log(Math.abs(new Int32Array(crypto.randomBytes(4).buffer)[0]));
 	return Math.abs(new Int32Array(crypto.randomBytes(4).buffer)[0]);
 }
 
@@ -74,7 +73,7 @@ export class LobbyDurableObject extends DurableObject {
 
 		// TODO: better typing?
 		// AD NOTE: Trying to use server as `ws`...
-		const clientSocket: ClientSocket = new ClientSocket(server as any, userId());
+		const clientSocket: ClientSocket = new ClientSocket(server, userId());
 		this.gameServer.addClient(clientSocket);
 
 		// // Upon receiving a message from the client, the server replies with the same message,
