@@ -24,6 +24,7 @@ export class Lobby {
 			if (this.players.find((el) => el.id === newPlayer.id)) {
 				return false;
 			}
+			newPlayer.lobbyId = this.id;
 			// Add the player to the Lobby list
 			this.players.push(newPlayer);
 
@@ -35,6 +36,11 @@ export class Lobby {
 
 	removePlayer(idPlayer: number) {
 		try {
+			let playerToRemove = this.players.find((currentClientSocket) => currentClientSocket.id == idPlayer);
+			if (playerToRemove) {
+				playerToRemove.lobbyId = '';
+			}
+
 			// remove the player from the list
 			const index = this.players.findIndex((el) => el.id === idPlayer);
 			if (index !== -1) {

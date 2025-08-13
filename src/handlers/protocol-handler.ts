@@ -32,6 +32,8 @@ export class ProtocolHelper {
 		const playerConnectedMessage: Message = new Message(EAction.PlayerJoin, {
 			username: playerClient.username,
 			id: playerClient.id,
+			color: playerClient.color,
+			lobbyId: playerClient.lobbyId,
 			position: playerClient.position,
 			direction: playerClient.direction,
 		});
@@ -111,6 +113,7 @@ export class ProtocolHelper {
 			if (message.payload.secretKey === secretKey) {
 				clearTimeout(clientSocket.logoutTimeout);
 				clientSocket.username = message.payload.username;
+				clientSocket.color = message.payload.color;
 				LoggerHelper.logInfo(`Connection confirmed for ${clientSocket.id}`);
 
 				// Send response
@@ -137,12 +140,12 @@ export class ProtocolHelper {
 	public static sendUserList = (gameServer: GameServerHandler, clientSocket: ClientSocket) => {
 		try {
 			const userListMessage: Message = new Message(EAction.GetUsers, {
-				users: gameServer.connectedClients.map((el) => {
+				users: gameServer.connectedClients.map(({ username, id, lobbyId, color }) => {
 					return {
-						username: el.username,
-						id: el.id,
-						position: el.position,
-						direction: el.direction,
+						username,
+						id,
+						lobbyId,
+						color,
 					};
 				}),
 			});
@@ -236,9 +239,18 @@ export class ProtocolHelper {
 		try {
 			const lobbyToJoin: Lobby | undefined = gameServer.getLobbyById(message.payload.id);
 			if (!!lobbyToJoin) {
+				// If the player is already in a lobby, do not allow them to join a new one
+				if (clientSocket.lobbyId.length > 1) {
+					const joinLobbyFailureMessage = new Message(EAction.JoinLobby, {
+						success: false,
+					});
+					clientSocket.socket.send(joinLobbyFailureMessage.toString());
+					return;
+				}
+
 				if (lobbyToJoin.addPlayer(clientSocket)) {
 					const joinLobbySuccessMessage = new Message(EAction.JoinLobby, {
-						lobbyId: lobbyToJoin.id,
+						lobbyToJoin,
 					});
 					clientSocket.socket.send(joinLobbySuccessMessage.toString());
 					// Alert all clients the changes to the lobbies
@@ -258,10 +270,10 @@ export class ProtocolHelper {
 					// }
 				}
 			} else {
-				// const joinLobbyFailureMessage = new Message(EAction.JoinLobby, {
-				// 	success: false,
-				// });
-				// clientSocket.socket.send(joinLobbyFailureMessage.toString());
+				const joinLobbyFailureMessage = new Message(EAction.JoinLobby, {
+					success: false,
+				});
+				clientSocket.socket.send(joinLobbyFailureMessage.toString());
 			}
 		} catch (err: any) {
 			LoggerHelper.logError(`[ProtocolHelper.joinExistingLobby()] An error had occurred while parsing a message: ${err}`);
