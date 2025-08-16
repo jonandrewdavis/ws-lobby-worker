@@ -168,7 +168,7 @@ export class ProtocolHelper {
 
 	public static sendLobby = (gameServer: GameServerHandler, clientSocket: ClientSocket) => {
 		try {
-			const lobby: Lobby = gameServer.getLobbyByPlayerId(clientSocket.id);
+			const lobby: Lobby | undefined = gameServer.getLobbyByPlayerId(clientSocket.id);
 			if (!!lobby) {
 				const message = new Message(EAction.GetOwnLobby, {
 					lobby: lobby.get(),

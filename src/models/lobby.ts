@@ -1,13 +1,14 @@
 import { EAction } from '../base/enumerators';
 import { ClientSocket } from './clientSocket';
-import { LobbyClient } from './lobbyClient';
+// import { LobbyClient } from './lobbyClient'; //NOTE: REmoved. I think oit was for security, so that a LobbyClient shared less data than a ClientSocket
+// Lobbyclient mapped on players for the get, but dropped "color"
 import { Message } from './message';
 import { LoggerHelper } from '../helpers/logger-helper';
 
 export class Lobby {
-	players: ClientSocket[];
+	players: ClientSocket[] = [];
 	isGameStarted: boolean = false;
-	id: String;
+	id: String = '';
 
 	constructor(id: String, players: ClientSocket[] = []) {
 		try {
@@ -59,7 +60,7 @@ export class Lobby {
 			return {
 				id: this.id,
 				isGameStarted: this.isGameStarted,
-				players: this.players.map((el) => new LobbyClient(el.id, el.username, el.position, el.direction)),
+				players: this.players,
 			};
 		} catch (err) {
 			LoggerHelper.logError(`An error had occurred while getting the lobby: ${err}`);
